@@ -1,5 +1,5 @@
 # SecurityAWS
-script que verifica a segurança de sua conta na AWS, ele faz isso verificando as regras de segurança de todas as instâncias e verificando se elas estão usando as regras de segurança corretas. 
+Script que verifica a segurança de sua conta na AWS, ele faz isso verificando as regras de segurança de todas as instâncias e verificando se elas estão usando as regras de segurança corretas. 
 
 # Atualizações
 º Adicionei o Reservations e o Instances para percorrer as instâncias corretamente.
