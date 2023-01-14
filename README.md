@@ -10,4 +10,4 @@ Script que verifica a segurança de sua conta na AWS, ele faz isso verificando a
 
 º O script agora verifica se algum Elastic IP está desvinculado, o que é importante para evitar cobranças desnecessárias.
 
-º Adicionei um armazenador para os  resultados da verificação em um arquivo CSV para que eles possam ser analisados e auditados posteriormente
+º Adicionei um armazenador para os  resultados da verificação em um arquivo CSV para que eles possam ser analisados e auditados posteriormente.
