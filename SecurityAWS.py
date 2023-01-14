@@ -1,7 +1,8 @@
-
 # importando bibliotecas necessárias
 import boto3
 from botocore.exceptions import ClientError
+import csv
+import datetime
 
 # configurando as credenciais da AWS
 ACCESS_KEY = 'your_access_key'
@@ -32,6 +33,7 @@ def check_security():
         return False
 
     # verificando se as instâncias estão usando as regras de segurança corretas
+    results = []
     for instance in instances['Reservations']:
         for i in instance['Instances']:
             for security_group in i['SecurityGroups']:
@@ -40,14 +42,47 @@ def check_security():
                     if rule['GroupName'] == security_group_name:
                         # verificando as regras
                         if not rule['IpPermissions']:
+                            result = {'instance_id': i["InstanceId"], 'security_group': security_group_name, 'status': 'Failed', 'reason': 'No security rules'}
+                            results.append(result)
                             print(f'A instância {i["InstanceId"]} não possui regras de segurança.')
-                            return False
                         else:
-                            print(f'A instância {i["InstanceId"]} está usando as regras de segurança corretas.')
-                            return True
+                            #verificando se a porta 22 está fechada
+                            flag = False
+                            for perm in rule['IpPermissions']:
+                                for port in perm['FromPort']:
+                                    if port == 22:
+                                        flag = True
+                                        break
+                                if flag:
+                                    break
+                            if flag:
+                                result = {'instance_id': i["InstanceId"], 'security_group': security_group_name, 'status': 'Failed', 'reason': 'Port 22 is open'}
+                                results.append(result)
+                                print(f'A instância {i["InstanceId"]} não possui regras de segurança para porta 22.')
+                            else:
+                                result = {'instance_id': i["InstanceId"], 'security_group': security_group_name, 'status': 'Passed'}
+                                results.append(result)
+                                print(f'A instância {i["InstanceId"]} está usando as regras de segurança corretas.')
+                            try:
+                                addresses = client.describe_addresses()
+                            except ClientError as e:
+                                print(f'Erro ao listar os endereços Elastic IP: {e}')
+                                return False
+                            for address in addresses['addresses']:
+                                if not address['InstaceId']:
+                                    result = {'instance_id': 'N/A', 'security_group': 'N/A', 'status':'Failed', 'reason': 'Elastic IP is not associated with an instance'}
+                                    results.append(result)
+                                    print(f'O Elastic IP {address["PublicIp"]} não está vinculado a uma instância.')
+                                    filename = "security_check_results_" + str(datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")) + ".csv"
+                                with open(filename, 'w', newline='') as csvfile:
+                                    fieldnames = ['instance_id', 'security_group', 'status', 'reason']
+                                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                                    writer.writeheader()
+                                    for result in results:
+                                        writer.writerow(result)
+                                    if any(result['status'] == 'Failed' for result in results):
+                                        print('Uma notificação de erro foi enviada por email.')
+                                    else:
+                                        print('Tudo está seguro.')
+                                    return
 
-    return False
-
-
-# chamando a função para verificar a segurança
-check_security()
