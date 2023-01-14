@@ -85,4 +85,5 @@ def check_security():
                                     else:
                                         print('Tudo está seguro.')
                                     return
+check_security()
 
